@@ -16,7 +16,10 @@ class GroceryStore extends StatelessWidget {
               },
               icon: Icon(Icons.chevron_left),
             ),
-            Text('Grocery Store')
+            Text(
+              'Grocery Store',
+              style: TextStyle(),
+            ),
           ],
         ),
       ),
