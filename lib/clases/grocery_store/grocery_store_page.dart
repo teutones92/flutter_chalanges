@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chalanges/clases/grocery_store/grocery_provider.dart';
 import 'package:flutter_chalanges/clases/grocery_store/grocery_store_bloc.dart';
+import 'package:flutter_chalanges/clases/grocery_store/grocery_store_list.dart';
 
-const _backgroundColor = Color(0XFFF6F5F2);
-const _cartBarHeigth = 120.0;
+const backgroundColor = Color(0XFFF6F5F2);
+const cartBarHeigth = 120.0;
+const _panelTransition = Duration(milliseconds: 500);
 
 class GroceryStore extends StatefulWidget {
   const GroceryStore({Key? key}) : super(key: key);
@@ -15,75 +18,93 @@ class _GroceryStoreState extends State<GroceryStore> {
   final bloc = GroceryStoreBloc();
 
   void _onVerticalGesture(DragUpdateDetails details) {
-    print(details.primaryDelta!);
     if (details.primaryDelta! < -7) {
       bloc.changeToCart();
-    } else if (details.primaryDelta! > 2) {
+    } else if (details.primaryDelta! > 12) {
       bloc.changeToNormal();
     }
   }
 
   double _getTopForWhitePanel(GroceryState state, Size size) {
     if (state == GroceryState.normal) {
-      return _cartBarHeigth;
+      return -cartBarHeigth;
     } else if (state == GroceryState.cart) {
-      return -(size.height - kToolbarHeight) + 150.0;
+      return -(size.height - kToolbarHeight - cartBarHeigth / 2);
     } else
-      return _cartBarHeigth;
+      return 0.0;
+  }
+
+  double _getTopForBlackPanel(GroceryState state, Size size) {
+    if (state == GroceryState.normal) {
+      return size.height - kToolbarHeight - cartBarHeigth;
+    } else if (state == GroceryState.cart) {
+      return cartBarHeigth / 2;
+    } else
+      return 0.0;
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    return AnimatedBuilder(
-        animation: bloc,
-        builder: (context, _) {
-          return Scaffold(
-            backgroundColor: Colors.red,
-            body: SafeArea(
-              child: Column(
-                children: [
-                  _GroceryStoreAppBar(),
-                  //////////////////// Panel Blanco ////////////////////////
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: _getTopForWhitePanel(bloc.groceryState, size),
-                          height: size.height - kToolbarHeight,
-                          child: Container(
-                            decoration: BoxDecoration(
+    return GroceryProvider(
+      bloc: bloc,
+      child: AnimatedBuilder(
+          animation: bloc,
+          builder: (context, _) {
+            return Scaffold(
+              backgroundColor: Colors.red,
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    _GroceryStoreAppBar(),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          //////////////////// Panel Blanco ////////////////////////
+                          AnimatedPositioned(
+                            duration: _panelTransition,
+                            curve: Curves.decelerate,
+                            left: 0,
+                            right: 0,
+                            top: _getTopForWhitePanel(bloc.groceryState, size),
+                            height: size.height - kToolbarHeight,
+                            child: ClipRRect(
                               borderRadius: BorderRadius.only(
                                 bottomLeft: Radius.circular(30),
                                 bottomRight: Radius.circular(30),
                               ),
-                              color: Colors.white,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                ),
+                                child: GrocerySoreList(),
+                              ),
                             ),
                           ),
-                        ),
-                        ////////////////////////Panel Negro  ///////////////////
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: size.height - _cartBarHeigth - kToolbarHeight,
-                          height: size.height,
-                          child: GestureDetector(
-                            onVerticalDragUpdate: _onVerticalGesture,
-                            child: Container(
-                              color: Colors.black,
+                          ////////////////////////Panel Negro  ///////////////////
+                          AnimatedPositioned(
+                            duration: _panelTransition,
+                            curve: Curves.decelerate,
+                            left: 0,
+                            right: 0,
+                            top: _getTopForBlackPanel(bloc.groceryState, size),
+                            height: size.height,
+                            child: GestureDetector(
+                              onVerticalDragUpdate: _onVerticalGesture,
+                              child: Container(
+                                color: Colors.red,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          }),
+    );
   }
 }
 
@@ -95,7 +116,7 @@ class _GroceryStoreAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _backgroundColor,
+      color: backgroundColor,
       height: kToolbarHeight,
       child: Row(
         children: [
