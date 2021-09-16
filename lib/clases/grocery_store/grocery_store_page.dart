@@ -27,7 +27,7 @@ class _GroceryStoreState extends State<GroceryStore> {
 
   double _getTopForWhitePanel(GroceryState state, Size size) {
     if (state == GroceryState.normal) {
-      return -cartBarHeigth;
+      return -cartBarHeigth + kToolbarHeight;
     } else if (state == GroceryState.cart) {
       return -(size.height - kToolbarHeight - cartBarHeigth / 2);
     } else
@@ -36,9 +36,18 @@ class _GroceryStoreState extends State<GroceryStore> {
 
   double _getTopForBlackPanel(GroceryState state, Size size) {
     if (state == GroceryState.normal) {
-      return size.height - kToolbarHeight - cartBarHeigth;
+      return size.height - cartBarHeigth;
     } else if (state == GroceryState.cart) {
       return cartBarHeigth / 2;
+    } else
+      return 0.0;
+  }
+
+  double _getTopForAppBar(GroceryState state) {
+    if (state == GroceryState.normal) {
+      return 0.0;
+    } else if (state == GroceryState.cart) {
+      return -cartBarHeigth;
     } else
       return 0.0;
   }
@@ -52,52 +61,54 @@ class _GroceryStoreState extends State<GroceryStore> {
           animation: bloc,
           builder: (context, _) {
             return Scaffold(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.black,
               body: SafeArea(
-                child: Column(
+                child: Stack(
                   children: [
-                    _GroceryStoreAppBar(),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          //////////////////// Panel Blanco ////////////////////////
-                          AnimatedPositioned(
-                            duration: _panelTransition,
-                            curve: Curves.decelerate,
-                            left: 0,
-                            right: 0,
-                            top: _getTopForWhitePanel(bloc.groceryState, size),
-                            height: size.height - kToolbarHeight,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(30),
-                                bottomRight: Radius.circular(30),
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                ),
-                                child: GrocerySoreList(),
-                              ),
-                            ),
+                    //////////////////// Panel Blanco ////////////////////////
+
+                    AnimatedPositioned(
+                      duration: _panelTransition,
+                      curve: Curves.decelerate,
+                      left: 0,
+                      right: 0,
+                      top: _getTopForWhitePanel(bloc.groceryState, size),
+                      height: size.height - kToolbarHeight,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
                           ),
-                          ////////////////////////Panel Negro  ///////////////////
-                          AnimatedPositioned(
-                            duration: _panelTransition,
-                            curve: Curves.decelerate,
-                            left: 0,
-                            right: 0,
-                            top: _getTopForBlackPanel(bloc.groceryState, size),
-                            height: size.height,
-                            child: GestureDetector(
-                              onVerticalDragUpdate: _onVerticalGesture,
-                              child: Container(
-                                color: Colors.red,
-                              ),
-                            ),
-                          ),
-                        ],
+                          child: GrocerySoreList(),
+                        ),
                       ),
+                    ),
+                    ////////////////////////Panel Negro  ///////////////////
+                    AnimatedPositioned(
+                      duration: _panelTransition,
+                      curve: Curves.decelerate,
+                      left: 0,
+                      right: 0,
+                      top: _getTopForBlackPanel(bloc.groceryState, size),
+                      height: size.height,
+                      child: GestureDetector(
+                        onVerticalDragUpdate: _onVerticalGesture,
+                        child: Container(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    AnimatedPositioned(
+                      duration: _panelTransition,
+                      curve: Curves.decelerate,
+                      child: _GroceryStoreAppBar(),
+                      top: _getTopForAppBar(bloc.groceryState),
+                      left: 0,
+                      right: 0,
                     ),
                   ],
                 ),
@@ -124,9 +135,13 @@ class _GroceryStoreAppBar extends StatelessWidget {
             color: Colors.black,
           ),
           Expanded(
-            child: Text('Fruits & Vegetables'),
+            child: Text(
+              'Fruits & Vegetables',
+              style: TextStyle(color: Colors.black),
+            ),
           ),
           IconButton(
+            color: Colors.black,
             onPressed: () {},
             icon: Icon(Icons.settings),
           )

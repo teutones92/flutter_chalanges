@@ -13,11 +13,12 @@ class GrocerySoreList extends StatelessWidget {
     final bloc = GroceryProvider.of(context)!.bloc;
     return Container(
       color: backgroundColor,
-      padding: const EdgeInsets.only(top: cartBarHeigth, right: 3, left: 3),
+      padding: const EdgeInsets.only(top: cartBarHeigth, right: 10, left: 10),
       child: StaggeredDualView(
           aspectRatio: 0.7,
           key: key,
           itemPercent: 0.3,
+          spacing: 10,
           itemBuilder: (context, index) {
             final product = bloc.catalog[index];
             return GestureDetector(
@@ -32,10 +33,12 @@ class GrocerySoreList extends StatelessWidget {
                 );
               },
               child: Card(
+                color: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
-                elevation: 20,
+                elevation: 8,
+                shadowColor: Colors.black45,
                 child: Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: Column(
