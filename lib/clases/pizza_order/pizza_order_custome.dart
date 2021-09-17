@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chalanges/clases/pizza_order/pizza_order_ingredients.dart';
 
-const _pizzaCartSize = 48.0;
+/////// minuto 30:45 del video de flutter challenge /////
+
+const _pizzaCartSize = 60.0;
 
 class PizzaOrderCustome extends StatelessWidget {
   const PizzaOrderCustome({Key? key}) : super(key: key);
@@ -44,10 +47,12 @@ class PizzaOrderCustome extends StatelessWidget {
               child: Column(
                 children: [
                   Expanded(
+                    flex: 3,
                     child: _PizzaDetails(),
                   ),
                   Expanded(
-                    child: Container(),
+                    flex: 2,
+                    child: _PizzaIngredients(),
                   ),
                 ],
               ),
@@ -75,21 +80,44 @@ class _PizzaDetails extends StatelessWidget {
       children: [
         SizedBox(height: 10),
         Expanded(
-          child: Stack(
-            children: [
-              Image.asset('assets/pizza_order/samples/wooden_plate2.png'),
-              Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Image.asset('assets/pizza_order/samples/pizza1.png')),
-            ],
-          ),
-        ),
+            child: DragTarget<Ingredients>(
+          onAccept: (ingredient) {
+            print('acept');
+          },
+          // onWillAccept: (ingredient) {
+          //   print('onWillAcept');
+          // },
+          onLeave: (ingredient) {
+            print('onleave');
+          },
+          builder: (context, list, reject) {
+            return Stack(
+              children: [
+                Image.asset('assets/pizza_order/samples/wooden_plate2.png'),
+                Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child:
+                        Image.asset('assets/pizza_order/samples/pizza1.png')),
+              ],
+            );
+          },
+        )),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 15),
           child: Text(
             'Precio',
             style: TextStyle(
                 color: Colors.brown, fontSize: 30, fontWeight: FontWeight.bold),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          child: Text(
+            'ingredientes',
+            style: TextStyle(
+                color: Colors.brown,
+                fontSize: 10,
+                fontWeight: FontWeight.normal),
           ),
         ),
       ],
@@ -103,16 +131,66 @@ class _PizzaCartButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.red,
-      height: 50,
-      width: 50,
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [Colors.orange.withOpacity(0.5), Colors.orange],
         ),
       ),
+      child: IconButton(
+          onPressed: () {},
+          icon: Icon(
+            Icons.shopping_cart_outlined,
+            color: Colors.white,
+            size: 30,
+          )),
     );
+  }
+}
+
+class _PizzaIngredients extends StatelessWidget {
+  const _PizzaIngredients({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: ingredients.length,
+        itemBuilder: (context, index) {
+          final ingredient = ingredients[index];
+          return _PizzaIngredientsItem(
+            ingredient: ingredient,
+          );
+        });
+  }
+}
+
+class _PizzaIngredientsItem extends StatelessWidget {
+  final Ingredients ingredient;
+  const _PizzaIngredientsItem({Key? key, required this.ingredient})
+      : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    final child = Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        height: 45,
+        width: 45,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color(0xFFF5EED3),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(3.0),
+          child: Image.asset(
+            ingredient.image,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+    return Draggable(feedback: child, data: ingredient, child: child);
   }
 }
