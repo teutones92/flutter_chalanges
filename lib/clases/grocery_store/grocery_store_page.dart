@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chalanges/clases/grocery_store/grocery_provider.dart';
 import 'package:flutter_chalanges/clases/grocery_store/grocery_store_bloc.dart';
+import 'package:flutter_chalanges/clases/grocery_store/grocery_store_cart.dart';
 import 'package:flutter_chalanges/clases/grocery_store/grocery_store_list.dart';
 
 const backgroundColor = Color(0XFFF6F5F2);
@@ -20,7 +21,7 @@ class _GroceryStoreState extends State<GroceryStore> {
   void _onVerticalGesture(DragUpdateDetails details) {
     if (details.primaryDelta! < -7) {
       bloc.changeToCart();
-    } else if (details.primaryDelta! > 12) {
+    } else if (details.primaryDelta! > 7) {
       bloc.changeToNormal();
     }
   }
@@ -99,6 +100,96 @@ class _GroceryStoreState extends State<GroceryStore> {
                         onVerticalDragUpdate: _onVerticalGesture,
                         child: Container(
                           color: Colors.black,
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(25.0),
+                                child: AnimatedSwitcher(
+                                  duration: _panelTransition,
+                                  child: bloc.groceryState ==
+                                          GroceryState.normal
+                                      ? Row(
+                                          children: [
+                                            Text(
+                                              'Carrito',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 20.0,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Expanded(
+                                              child: SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: Row(
+                                                  children: List.generate(
+                                                    bloc.cart.length,
+                                                    (index) => Padding(
+                                                      padding: const EdgeInsets
+                                                              .symmetric(
+                                                          horizontal: 8),
+                                                      child: Stack(
+                                                        children: [
+                                                          Hero(
+                                                            tag:
+                                                                'list_${bloc.cart[index].product.name}details',
+                                                            child: CircleAvatar(
+                                                              backgroundColor:
+                                                                  Colors.white,
+                                                              backgroundImage:
+                                                                  AssetImage(bloc
+                                                                      .cart[
+                                                                          index]
+                                                                      .product
+                                                                      .image),
+                                                            ),
+                                                          ),
+                                                          Positioned(
+                                                            right: 0,
+                                                            child: CircleAvatar(
+                                                              radius: 10,
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                              child: Text(
+                                                                bloc.cart[index]
+                                                                    .quantity
+                                                                    .toString(),
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            CircleAvatar(
+                                              backgroundColor: Colors.yellow,
+                                              child: Text(
+                                                bloc
+                                                    .cartTotalElemnts()
+                                                    .toString(),
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                              ),
+                              GroceryStoreCart()
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -136,8 +227,11 @@ class _GroceryStoreAppBar extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'Fruits & Vegetables',
-              style: TextStyle(color: Colors.black),
+              'Frútas y Vegetáles',
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold),
             ),
           ),
           IconButton(

@@ -12,6 +12,7 @@ class GroceryStoreBloc with ChangeNotifier {
   GroceryState groceryState = GroceryState.normal;
 // accediendo a la lista de productos a traves del bloc
   List<GroceryProduct> catalog = List.unmodifiable(groceryProducts);
+  List<GroceryProductItem> cart = [];
 
   void changeToNormal() {
     groceryState = GroceryState.normal;
@@ -23,8 +24,38 @@ class GroceryStoreBloc with ChangeNotifier {
     notifyListeners();
   }
 
-  void changeToDetails() {
-    groceryState = GroceryState.details;
+  // void changeToDetails() {
+  //   groceryState = GroceryState.details;
+  //   notifyListeners();
+  // }
+
+  void addProduct(GroceryProduct product) {
+    for (GroceryProductItem item in cart) {
+      if (item.product.name == product.name) {
+        item.plus();
+        notifyListeners();
+        return;
+      }
+    }
+    cart.add(
+      GroceryProductItem(product: product),
+    );
     notifyListeners();
+  }
+
+  int cartTotalElemnts() => cart.fold(
+      0, (previousValue, element) => previousValue + element.quantity);
+}
+
+class GroceryProductItem {
+  GroceryProductItem({this.quantity = 1, required this.product});
+  int quantity;
+  final GroceryProduct product;
+  void plus() {
+    quantity++;
+  }
+
+  void minus() {
+    quantity--;
   }
 }

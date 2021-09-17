@@ -24,12 +24,19 @@ class GrocerySoreList extends StatelessWidget {
             return GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
-                  PageRouteBuilder(pageBuilder: (context, animation, ___) {
-                    return FadeTransition(
-                      child: GroceryStoreDetails(product: product),
-                      opacity: animation,
-                    );
-                  }),
+                  PageRouteBuilder(
+                      transitionDuration: const Duration(milliseconds: 900),
+                      pageBuilder: (context, animation, ___) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: GroceryStoreDetails(
+                            product: product,
+                            onProductAdded: () {
+                              bloc.addProduct(product);
+                            },
+                          ),
+                        );
+                      }),
                 );
               },
               child: Card(
