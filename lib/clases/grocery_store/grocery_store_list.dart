@@ -25,7 +25,9 @@ class GrocerySoreList extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   PageRouteBuilder(
-                      transitionDuration: const Duration(milliseconds: 900),
+                      transitionDuration: const Duration(milliseconds: 1200),
+                      reverseTransitionDuration:
+                          const Duration(milliseconds: 1200),
                       pageBuilder: (context, animation, ___) {
                         return FadeTransition(
                           opacity: animation,
