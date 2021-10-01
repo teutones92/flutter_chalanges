@@ -24,7 +24,7 @@ class PizzaIngredients extends StatelessWidget {
                   exist: bloc.containsIngredients(ingredient),
                   onTap: () {
                     bloc.removeIngredients(ingredient);
-                    print('delete');
+                    print('deletez');
                   },
                 );
               });
