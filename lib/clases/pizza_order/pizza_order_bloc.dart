@@ -1,6 +1,20 @@
+import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart' show ChangeNotifier;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+// ignore: implementation_imports
+import 'package:flutter/src/rendering/proxy_box.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_order_ingredients.dart';
+
+class PizzaMetadata {
+  PizzaMetadata(this.imageBytes, this.position, this.size);
+  final Uint8List imageBytes;
+  final Offset position;
+  final Size size;
+}
 
 enum PizzaSizeValue {
   s,
@@ -33,6 +47,9 @@ class PizzaOrderBloc extends ChangeNotifier {
   final notifyFocussed = ValueNotifier(false);
   final notifierPizzaSize =
       ValueNotifier<PizzaSizeState>(PizzaSizeState(PizzaSizeValue.m));
+  final notifierPizzaboxAnimation = ValueNotifier<bool>(false);
+  final notifierImagePizza = ValueNotifier<bool>(false);
+  var imagePizza;
 
   void addIngredient(Ingredients ingredient) {
     listIngredients.add(ingredient);
@@ -59,5 +76,25 @@ class PizzaOrderBloc extends ChangeNotifier {
   void refreshDeletedIngredient() {
     deletedIngredient = null;
     notifierDeletedIngredient.value = false;
+  }
+
+  void startPizzaBoxAnimation() {
+    notifierPizzaboxAnimation.value = true;
+    notifierImagePizza.value = true;
+  }
+
+  void reset() {
+    notifierPizzaboxAnimation.value = false;
+    notifierImagePizza.value = false;
+    imagePizza = null;
+  }
+
+  Future<void> transformToImage(RenderRepaintBoundary boundary) async {
+    final position = boundary.localToGlobal(Offset.zero);
+    final size = boundary.size;
+    final image = await boundary.toImage();
+    ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+    imagePizza = PizzaMetadata(byteData!.buffer.asUint8List(), position, size);
+    // notifierImagePizza.value = false;
   }
 }

@@ -1,15 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_cart_button.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_ingredient.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_order_bloc.dart';
+import 'package:flutter_chalanges/clases/pizza_order/pizza_order_sale_animation.dart';
+import 'package:flutter_chalanges/clases/pizza_order/pizza_order_ingredient_animation.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_order_ingredients.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_order_provider.dart';
+import 'package:flutter_chalanges/clases/pizza_order/pizza_price_animation.dart';
 import 'package:flutter_chalanges/clases/pizza_order/pizza_size_button.dart';
 
 const _pizzaCartSize = 60.0;
-
-List<Animation> _animationList = <Animation>[];
 
 class PizzaOrderCustome extends StatefulWidget {
   const PizzaOrderCustome({Key? key}) : super(key: key);
@@ -79,7 +83,7 @@ class _PizzaOrderCustomeState extends State<PizzaOrderCustome> {
               left: MediaQuery.of(context).size.width / 2 - _pizzaCartSize / 2,
               child: PizzaCartButton(
                 onTap: () {
-                  print('cart');
+                  bloc.startPizzaBoxAnimation();
                 },
               ),
             ),
@@ -99,108 +103,12 @@ class _PizzaDetails extends StatefulWidget {
 
 class __PizzaDetailsState extends State<_PizzaDetails>
     with TickerProviderStateMixin {
-  late AnimationController _animationController;
   late AnimationController _animationRotationController;
-  late BoxConstraints _pizzaContrains;
-
-  void _buildIngredientsAnimation() {
-    _animationList.clear();
-    _animationList.add(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.0, 0.8, curve: Curves.decelerate),
-      ),
-    );
-    _animationList.add(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.2, 0.8, curve: Curves.decelerate),
-      ),
-    );
-    _animationList.add(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.4, 1.0, curve: Curves.decelerate),
-      ),
-    );
-    _animationList.add(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.1, 0.7, curve: Curves.decelerate),
-      ),
-    );
-    _animationList.add(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.3, 1.0, curve: Curves.decelerate),
-      ),
-    );
-  }
-
-  Widget _buildIngredientsWidget(Ingredients? deletedIngredient) {
-    List<Widget> elements = [];
-    final listIngredients =
-        List.from(PizzaOrderProvider.of(context).listIngredients);
-    if (deletedIngredient != null) {
-      listIngredients.add(deletedIngredient);
-    }
-    if (_animationList.isNotEmpty) {
-      for (int i = 0; i < listIngredients.length; i++) {
-        Ingredients ingredient = listIngredients[i];
-        final ingredientWidget = Image.asset(ingredient.image, height: 40);
-        for (int j = 0; j < ingredient.positions.length; j++) {
-          final animation = _animationList[j];
-          final position = ingredient.positions[j];
-          final positionX = position.dx;
-          final positionY = position.dy;
-          if (i == listIngredients.length - 1 &&
-              _animationController.isAnimating) {
-            double fromX = 0.0, fromY = 0.0;
-            if (j < 1) {
-              fromX = -_pizzaContrains.maxWidth * (1 - animation.value);
-            } else if (j < 2) {
-              fromX = -_pizzaContrains.maxWidth * (1 - animation.value);
-            } else if (j < 4) {
-              fromY = -_pizzaContrains.maxHeight * (1 - animation.value);
-            } else {
-              fromY = _pizzaContrains.maxHeight * (1 - animation.value);
-            }
-            final opacity = animation.value;
-            if (animation.value > 0) {
-              elements.add(
-                Opacity(
-                  opacity: opacity,
-                  child: Transform(
-                    transform: Matrix4.identity()
-                      ..translate(fromX + _pizzaContrains.maxWidth * positionX,
-                          fromY + _pizzaContrains.maxHeight * positionY),
-                    child: ingredientWidget,
-                  ),
-                ),
-              );
-            }
-          } else {
-            elements.add(
-              Transform(
-                transform: Matrix4.identity()
-                  ..translate(_pizzaContrains.maxWidth * positionX,
-                      _pizzaContrains.maxHeight * positionY),
-                child: ingredientWidget,
-              ),
-            );
-          }
-        }
-      }
-      return Stack(
-        children: elements,
-      );
-    }
-    return SizedBox.fromSize();
-  }
+  final _keyPizza = GlobalKey();
 
   @override
   void initState() {
-    _animationController = AnimationController(
+    animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 700),
     );
@@ -209,12 +117,20 @@ class __PizzaDetailsState extends State<_PizzaDetails>
       vsync: this,
       duration: Duration(milliseconds: 1200),
     );
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      final bloc = PizzaOrderProvider.of(context);
+      bloc.notifierPizzaboxAnimation.addListener(() {
+        if (bloc.notifierPizzaboxAnimation.value == true) {
+          _addPizzaToCart();
+        }
+      });
+    });
     super.initState();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    animationController.dispose();
     _animationRotationController.dispose();
     super.dispose();
   }
@@ -230,8 +146,8 @@ class __PizzaDetailsState extends State<_PizzaDetails>
             onAccept: (ingredient) {
               bloc.notifyFocussed.value = false;
               bloc.addIngredient(ingredient);
-              _buildIngredientsAnimation();
-              _animationController.forward(from: 0.0);
+              buildIngredientsAnimation();
+              animationController.forward(from: 0.0);
             },
             onWillAccept: (ingredient) {
               bloc.notifyFocussed.value = true;
@@ -243,73 +159,102 @@ class __PizzaDetailsState extends State<_PizzaDetails>
             builder: (context, list, reject) {
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  _pizzaContrains = constraints;
-                  return ValueListenableBuilder<PizzaSizeState>(
-                      valueListenable: bloc.notifierPizzaSize,
-                      builder: (context, pizzaSize, _) {
-                        return RotationTransition(
-                          turns: CurvedAnimation(
-                              curve: Curves.elasticOut,
-                              parent: _animationRotationController),
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: ValueListenableBuilder<bool>(
-                                    valueListenable: bloc.notifyFocussed,
-                                    builder: (context, _focused, _) {
-                                      return AnimatedContainer(
-                                        duration: Duration(milliseconds: 500),
-                                        height: _focused
-                                            ? constraints.maxHeight *
-                                                pizzaSize.factor
-                                            : constraints.maxHeight *
-                                                    pizzaSize.factor -
-                                                10,
-                                        child: Stack(
-                                          children: [
-                                            DecoratedBox(
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                      blurRadius: 10.0,
-                                                      color: Colors.black26,
-                                                      offset: Offset(0.0, 5.0),
-                                                      spreadRadius: 5.0)
-                                                ],
-                                              ),
-                                              child: Image.asset(
-                                                  'assets/pizza_order/samples/wooden_plate2.png'),
-                                            ),
-                                            Padding(
-                                                padding:
-                                                    const EdgeInsets.all(10.0),
-                                                child: Image.asset(
-                                                    'assets/pizza_order/samples/pizza1.png')),
-                                          ],
+                  pizzaContrains = constraints;
+                  return ValueListenableBuilder<bool>(
+                      valueListenable: bloc.notifierImagePizza,
+                      builder: (context, data, child) {
+                        if (data == true) {
+                          Future.microtask(() {
+                            Timer(Duration(milliseconds: 200), () {
+                              _startPizzaBoxAnimation(bloc.imagePizza);
+                            });
+                          });
+                        }
+                        return AnimatedOpacity(
+                          duration: const Duration(milliseconds: 100),
+                          opacity: data == true ? 0.0 : 1,
+                          child: ValueListenableBuilder<PizzaSizeState>(
+                              valueListenable: bloc.notifierPizzaSize,
+                              builder: (context, pizzaSize, _) {
+                                return RepaintBoundary(
+                                  key: _keyPizza,
+                                  child: RotationTransition(
+                                    turns: CurvedAnimation(
+                                        curve: Curves.elasticOut,
+                                        parent: _animationRotationController),
+                                    child: Stack(
+                                      children: [
+                                        Center(
+                                          child: ValueListenableBuilder<bool>(
+                                              valueListenable:
+                                                  bloc.notifyFocussed,
+                                              builder: (context, _focused, _) {
+                                                return AnimatedContainer(
+                                                  duration: Duration(
+                                                      milliseconds: 500),
+                                                  height: _focused
+                                                      ? constraints.maxHeight *
+                                                          pizzaSize.factor
+                                                      : constraints.maxHeight *
+                                                              pizzaSize.factor -
+                                                          10,
+                                                  child: Stack(
+                                                    children: [
+                                                      DecoratedBox(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          shape:
+                                                              BoxShape.circle,
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                                blurRadius:
+                                                                    10.0,
+                                                                color: Colors
+                                                                    .black26,
+                                                                offset: Offset(
+                                                                    0.0, 5.0),
+                                                                spreadRadius:
+                                                                    5.0)
+                                                          ],
+                                                        ),
+                                                        child: Image.asset(
+                                                            'assets/pizza_order/samples/wooden_plate2.png'),
+                                                      ),
+                                                      Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(10.0),
+                                                          child: Image.asset(
+                                                              'assets/pizza_order/samples/pizza1.png')),
+                                                    ],
+                                                  ),
+                                                );
+                                              }),
                                         ),
-                                      );
-                                    }),
-                              ),
-                              ValueListenableBuilder<bool>(
-                                valueListenable: bloc.notifierDeletedIngredient,
-                                builder: (context, yes, _) {
-                                  if (yes == true) {
-                                    print('si se ejecuta \$$yes');
-                                    _animateDeletedIngredient(
-                                        bloc.deletedIngredient);
-                                  }
-                                  return AnimatedBuilder(
-                                    animation: _animationController,
-                                    builder: (context, _) {
-                                      return _buildIngredientsWidget(
-                                          bloc.deletedIngredient);
-                                    },
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                                        ValueListenableBuilder<bool>(
+                                          valueListenable:
+                                              bloc.notifierDeletedIngredient,
+                                          builder: (context, deleted, _) {
+                                            if (deleted == true) {
+                                              animateDeletedIngredient(
+                                                  bloc.deletedIngredient,
+                                                  context);
+                                            }
+                                            return AnimatedBuilder(
+                                              animation: animationController,
+                                              builder: (context, _) {
+                                                return buildIngredientsWidget(
+                                                    bloc.deletedIngredient,
+                                                    context);
+                                              },
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
                         );
                       });
                 },
@@ -319,7 +264,7 @@ class __PizzaDetailsState extends State<_PizzaDetails>
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 15),
-          child: _priceAnimation(context),
+          child: priceAnimation(context),
         ),
         ValueListenableBuilder<PizzaSizeState>(
             valueListenable: bloc.notifierPizzaSize,
@@ -363,51 +308,37 @@ class __PizzaDetailsState extends State<_PizzaDetails>
     );
   }
 
-  Future<void> _animateDeletedIngredient(Ingredients? deletedIngredient) async {
-    if (deletedIngredient != null) {
-      await _animationController.reverse(from: 1.0);
-      final bloc = PizzaOrderProvider.of(context);
-      bloc.refreshDeletedIngredient();
-    }
-  }
-
   void _updatePizzaSize(PizzaSizeValue value) {
     final bloc = PizzaOrderProvider.of(context);
     bloc.notifierPizzaSize.value = PizzaSizeState(value);
     _animationRotationController.forward(from: 0.0);
   }
-}
 
-Widget _priceAnimation(BuildContext context) {
-  final bloc = PizzaOrderProvider.of(context);
-  return ValueListenableBuilder<int>(
-      valueListenable: bloc.notifierTotal,
-      builder: (context, totalValue, _) {
-        return AnimatedSwitcher(
-          duration: Duration(milliseconds: 500),
-          transitionBuilder: (child, animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: animation.drive(
-                  Tween(
-                    begin: Offset(0.0, 0.0),
-                    end: Offset(
-                      0.0,
-                      animation.value,
-                    ),
-                  ),
-                ),
-                child: child,
-              ),
-            );
+  void _addPizzaToCart() {
+    final bloc = PizzaOrderProvider.of(context);
+    RenderRepaintBoundary boundary =
+        _keyPizza.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    bloc.transformToImage(boundary);
+  }
+
+  late OverlayEntry _overlayEntry;
+  bool _itsOverlay = false;
+
+  void _startPizzaBoxAnimation(PizzaMetadata metadata) {
+    _itsOverlay = true;
+    final bloc = PizzaOrderProvider.of(context);
+    if (_itsOverlay == true) {
+      _overlayEntry = OverlayEntry(builder: (context) {
+        return PizzaOrderAnimation(
+          metadata: metadata,
+          onComplete: () {
+            _overlayEntry.remove();
+            _itsOverlay = false;
+            bloc.reset();
           },
-          child: Text(
-            '\$$totalValue',
-            key: UniqueKey(),
-            style: TextStyle(
-                color: Colors.brown, fontSize: 30, fontWeight: FontWeight.bold),
-          ),
         );
       });
+      Overlay.of(context)!.insert(_overlayEntry);
+    }
+  }
 }
